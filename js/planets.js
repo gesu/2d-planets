@@ -232,6 +232,7 @@ Game.prototype.start = function() {
 };
 
 var game = new Game();
+
 game.resize();
 game.killOutOfBounds = false;
 game.flipOutOfBounds = true;
@@ -252,4 +253,35 @@ window.addEventListener('keydown', function(e) {
             game.drawFrame();
         }
     }
+});
+
+var cursorMass = 1e5;
+var cursorRadius = 5 + cursorMass / MAX_MASS * 10;
+
+Game.prototype.updateWithCursorPosition = function(cursorX, cursorY) {
+    var cursor = {
+        m: cursorMass,
+        x: cursorX,
+        y: cursorY,
+        radius: cursorRadius // not really needed for calculations, but added for completeness
+    };
+
+    this.players.forEach(function(player) {
+        if (this.killOutOfBounds && player.dead) { return; }
+
+        var fg = calculateFg(player, cursor),
+            ag = new Vector(
+                fg / player.m,
+                calculateTheta(player, cursor)
+            );
+
+        player.a = addVectors(player.a, ag);
+    }.bind(this));
+};
+
+window.addEventListener('mousemove', function(e) {
+    var rect = game.canvas.getBoundingClientRect();
+    var cursorX = e.clientX - rect.left;
+    var cursorY = e.clientY - rect.top;
+    game.updateWithCursorPosition(cursorX, cursorY);
 });
